@@ -1,96 +1,129 @@
 import java.util.*;
 
-// ===== Add-On Service =====
-class AddOnService {
-    private String name;
-    private double price;
+// ===== Reservation (Enhanced with ID) =====
+class Reservation {
+    private String reservationId;
+    private String guestName;
+    private String roomType;
 
-    public AddOnService(String name, double price) {
-        this.name = name;
-        this.price = price;
+    public Reservation(String reservationId, String guestName, String roomType) {
+        this.reservationId = reservationId;
+        this.guestName = guestName;
+        this.roomType = roomType;
     }
 
-    public String getName() {
-        return name;
+    public String getReservationId() {
+        return reservationId;
     }
 
-    public double getPrice() {
-        return price;
-    }
-}
-
-// ===== Add-On Service Manager =====
-class AddOnServiceManager {
-
-    // Map: Reservation ID -> List of Services
-    private Map<String, List<AddOnService>> serviceMap = new HashMap<>();
-
-    // Add service to reservation
-    public void addService(String reservationId, AddOnService service) {
-        serviceMap.putIfAbsent(reservationId, new ArrayList<>());
-        serviceMap.get(reservationId).add(service);
-
-        System.out.println(service.getName() + " added to Reservation " + reservationId);
+    public String getGuestName() {
+        return guestName;
     }
 
-    // Calculate total add-on cost
-    public double calculateTotalCost(String reservationId) {
-        double total = 0;
-
-        List<AddOnService> services = serviceMap.get(reservationId);
-
-        if (services != null) {
-            for (AddOnService s : services) {
-                total += s.getPrice();
-            }
-        }
-
-        return total;
+    public String getRoomType() {
+        return roomType;
     }
 
-    // Display services
-    public void displayServices(String reservationId) {
-        System.out.println("\n==== Services for Reservation " + reservationId + " ====");
-
-        List<AddOnService> services = serviceMap.get(reservationId);
-
-        if (services == null || services.isEmpty()) {
-            System.out.println("No add-on services selected.");
-            return;
-        }
-
-        for (AddOnService s : services) {
-            System.out.println(s.getName() + " - ₹" + s.getPrice());
-        }
-
-        System.out.println("Total Add-On Cost: ₹" + calculateTotalCost(reservationId));
+    @Override
+    public String toString() {
+        return reservationId + " | " + guestName + " | " + roomType;
     }
 }
 
-// ===== Demo Main =====
+// ===== Booking History =====
+class BookingHistory {
+
+    private List<Reservation> history = new ArrayList<>();
+
+    // Add confirmed booking
+    public void addBooking(Reservation reservation) {
+        history.add(reservation);
+    }
+
+    // Get all bookings (read-only usage)
+    public List<Reservation> getAllBookings() {
+        return history;
+    }
+
+    // Display all bookings
+    public void displayHistory() {
+        System.out.println("\n==== Booking History ====");
+        for (Reservation r : history) {
+            System.out.println(r);
+        }
+    }
+}
+
+// ===== Reporting Service =====
+class BookingReportService {
+
+    // Generate summary report
+    public void generateSummary(List<Reservation> bookings) {
+
+        System.out.println("\n==== Booking Report Summary ====");
+
+        Map<String, Integer> roomTypeCount = new HashMap<>();
+
+        for (Reservation r : bookings) {
+            roomTypeCount.put(
+                r.getRoomType(),
+                roomTypeCount.getOrDefault(r.getRoomType(), 0) + 1
+            );
+        }
+
+        // Print report
+        for (String type : roomTypeCount.keySet()) {
+            System.out.println(type + " booked: " + roomTypeCount.get(type));
+        }
+
+        System.out.println("Total Bookings: " + bookings.size());
+    }
+}
+
+// ===== Booking Service (Modified UC6) =====
+class BookingService {
+
+    private BookingHistory history;
+
+    public BookingService(BookingHistory history) {
+        this.history = history;
+    }
+
+    // Confirm booking (simplified for UC8)
+    public void confirmBooking(String guestName, String roomType) {
+
+        // Generate Reservation ID
+        String reservationId = "RES" + new Random().nextInt(1000);
+
+        Reservation reservation = new Reservation(reservationId, guestName, roomType);
+
+        // Store in history
+        history.addBooking(reservation);
+
+        System.out.println("Booking Confirmed: " + reservation);
+    }
+}
+
+// ===== Main =====
 public class BookMyStayApp {
 
     public static void main(String[] args) {
 
-        // Assume this reservation already exists from UC6
-        String reservationId = "SR101";
+        BookingHistory history = new BookingHistory();
+        BookingService bookingService = new BookingService(history);
+        BookingReportService reportService = new BookingReportService();
 
-        // Create Services
-        AddOnService breakfast = new AddOnService("Breakfast", 500);
-        AddOnService wifi = new AddOnService("WiFi", 200);
-        AddOnService airportPickup = new AddOnService("Airport Pickup", 1000);
+        // Simulate confirmed bookings
+        bookingService.confirmBooking("Alice", "Single Room");
+        bookingService.confirmBooking("Bob", "Double Room");
+        bookingService.confirmBooking("Charlie", "Single Room");
 
-        // Manager
-        AddOnServiceManager manager = new AddOnServiceManager();
+        // View History
+        history.displayHistory();
 
-        // Guest selects services
-        manager.addService(reservationId, breakfast);
-        manager.addService(reservationId, wifi);
-        manager.addService(reservationId, airportPickup);
+        // Generate Report
+        reportService.generateSummary(history.getAllBookings());
 
-        // Display
-        manager.displayServices(reservationId);
-
-        System.out.println("\nBooking + Inventory remain unchanged.");
+        System.out.println("\nReporting completed. No data modified.");
     }
 }
