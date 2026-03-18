@@ -1,1 +1,135 @@
+import java.util.*;
 
+// Room Class
+class Room {
+    int roomId;
+    String type;
+    boolean isAvailable;
+
+    Room(int roomId, String type) {
+        this.roomId = roomId;
+        this.type = type;
+        this.isAvailable = true;
+    }
+}
+
+// Booking Class
+class Booking {
+    String userName;
+    int roomId;
+
+    Booking(String userName, int roomId) {
+        this.userName = userName;
+        this.roomId = roomId;
+    }
+}
+
+// Main System Class
+class HotelManagementSystem {
+
+    private Map<Integer, Room> rooms = new HashMap<>();
+    private Queue<String> bookingQueue = new LinkedList<>();
+    private Set<Integer> bookedRooms = new HashSet<>();
+    private List<Booking> bookings = new ArrayList<>();
+
+    // Add Room
+    public void addRoom(int roomId, String type) {
+        rooms.put(roomId, new Room(roomId, type));
+    }
+
+    // Request Booking (FIFO)
+    public void requestBooking(String userName) {
+        bookingQueue.offer(userName);
+        System.out.println(userName + " added to booking queue.");
+    }
+
+    // Process Booking
+    public void processBooking() {
+        if (bookingQueue.isEmpty()) {
+            System.out.println("No booking requests.");
+            return;
+        }
+
+        String user = bookingQueue.poll();
+
+        for (Room room : rooms.values()) {
+            if (room.isAvailable && !bookedRooms.contains(room.roomId)) {
+                room.isAvailable = false;
+                bookedRooms.add(room.roomId);
+                bookings.add(new Booking(user, room.roomId));
+
+                System.out.println("Room " + room.roomId + " booked for " + user);
+                return;
+            }
+        }
+
+        System.out.println("No rooms available for " + user);
+    }
+
+    // Cancel Booking
+    public void cancelBooking(int roomId) {
+        if (!bookedRooms.contains(roomId)) {
+            System.out.println("Room not booked.");
+            return;
+        }
+
+        bookedRooms.remove(roomId);
+        rooms.get(roomId).isAvailable = true;
+
+        bookings.removeIf(b -> b.roomId == roomId);
+
+        System.out.println("Booking cancelled for room " + roomId);
+    }
+
+    // Display Rooms
+    public void displayRooms() {
+        for (Room room : rooms.values()) {
+            System.out.println("Room ID: " + room.roomId +
+                    ", Type: " + room.type +
+                    ", Available: " + room.isAvailable);
+        }
+    }
+
+    // Display Bookings
+    public void displayBookings() {
+        for (Booking b : bookings) {
+            System.out.println("User: " + b.userName + ", Room: " + b.roomId);
+        }
+    }
+}
+
+// Main Driver
+public class Main {
+    public static void main(String[] args) {
+
+        HotelManagementSystem system = new HotelManagementSystem();
+
+        // Add Rooms
+        system.addRoom(101, "Single");
+        system.addRoom(102, "Double");
+        system.addRoom(103, "Suite");
+
+        // Booking Requests (FIFO)
+        system.requestBooking("Alice");
+        system.requestBooking("Bob");
+        system.requestBooking("Charlie");
+
+        // Process Bookings
+        system.processBooking();
+        system.processBooking();
+        system.processBooking();
+
+        // Display
+        System.out.println("\nRooms:");
+        system.displayRooms();
+
+        System.out.println("\nBookings:");
+        system.displayBookings();
+
+        // Cancel
+        system.cancelBooking(102);
+
+        System.out.println("\nAfter Cancellation:");
+        system.displayRooms();
+    }
+}
